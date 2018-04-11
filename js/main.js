@@ -1,12 +1,12 @@
-let currentUser = {
-  uid: "1234567890abc",
-  name: "John Doe",
-  priv: "Admin"
-};
 (async function(TConfig){
   /**
   * Debug section
   **/
+  let currentUser = {
+    uid: "1234567890abc",
+    name: "John Doe",
+    priv: "Admin"
+  };
   /**
   *
   **/
