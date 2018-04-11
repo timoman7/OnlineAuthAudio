@@ -143,7 +143,9 @@
     }
   }
   window.onload = function(){
-    bodyscope.loggedIn = false;
+    if(bodyscope != undefined){
+      bodyscope.loggedIn = false;
+    }
     setInterval(()=>{
       if(document.querySelector("#lgin")){
         document.querySelector("#lgin").removeEventListener('click', login);
