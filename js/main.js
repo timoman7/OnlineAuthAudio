@@ -3,9 +3,9 @@
   * Debug section
   **/
   let currentUser = {
-    uid: "1234567890abc",
-    name: "John Doe",
-    priv: "Admin"
+    uid: "-1",
+    name: "Anonymous User",
+    priv: "None"
   };
   /**
   *
