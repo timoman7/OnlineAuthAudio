@@ -85,6 +85,9 @@
           firebase.database().ref('users').on('value', (u)=>{
             bodyscope.users = u.val();
           });
+          firebase.database().ref('admin').on('value', (u)=>{
+            bodyscope.owner = u.val();
+          });
           firebase.database().ref('audio').on('value', (u)=>{
             bodyscope.audioFiles = u.val();
           });
