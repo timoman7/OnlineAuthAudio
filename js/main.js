@@ -11,6 +11,31 @@
   *
   **/
   let bodyscope;
+  let persistence;
+  function b64toBlob(b64, sliceSize) {
+    let b64Data = b64.replace(/data:([\w/\-]*);base64,/g,'');
+    let contentType = b64.replace(/data:([\w/\-]*);base64,(.*)/g,'$1');
+    sliceSize = sliceSize || 512;
+
+    var byteCharacters = window.atob(b64Data);
+    var byteArrays = [];
+
+    for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+      var slice = byteCharacters.slice(offset, offset + sliceSize);
+
+      var byteNumbers = new Array(slice.length);
+      for (var i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+
+      var byteArray = new Uint8Array(byteNumbers);
+
+      byteArrays.push(byteArray);
+    }
+
+    var blob = new Blob(byteArrays, {type: contentType});
+    return blob;
+  }
   firebase.auth().getRedirectResult().then((result)=>{
   	let user = result.user;
   	let credential = result.credential;
@@ -30,8 +55,22 @@
         bodyscope.downloadFile = function(fileID){
           firebase.database().ref(`audio/${fileID}`).once('value', (d)=>{
             let downloadLink = document.createElement('audio');
-            downloadLink.src = Object.values(d.val().data).join('');
-            downloadLink.name = d.val().name;
+            let concatSrc = "";
+            let _audioFile_ = d.val();
+            let kns = Object.keys(_audioFile_.data).sort(function(a,b){
+              if(parseFloat(a.replace('data','')) > parseFloat(b.replace('data',''))){
+                return 1;
+              }else if(parseFloat(a.replace('data','')) < parseFloat(b.replace('data',''))){
+                return -1;
+              }else{
+                return 0;
+              }
+            });
+            kns.forEach((kn)=>{
+              concatSrc += _audioFile_.data[kn];
+            });
+            downloadLink.src = URL.createObjectURL(b64toBlob(concatSrc));
+            downloadLink.download = _audioFile_.name;
             downloadLink.controls = true;
             document.querySelector(`#${fileID}`).appendChild(downloadLink);
             document.querySelector(`#${fileID}-generator`).style.display = "none";
@@ -58,7 +97,6 @@
         if(bodyscope != undefined){
           bodyscope.currentUser = currentUser;
         }
-        console.log(v.val?v.val():v);
       });
       userReference.update({
         name: currentUser.displayName,
@@ -82,7 +120,10 @@
   function login(){
   	var provider;
   	provider = new firebase.auth.GoogleAuthProvider();
-  	firebase.auth().signInWithRedirect(provider);
+    console.log(persistence)
+  	firebase.auth().setPersistence(persistence).then(function(){
+      firebase.auth().signInWithRedirect(provider);
+    });
   }
   function logout(){
   	firebase.database().ref(`users/${currentUser.uid}`).update({
@@ -117,13 +158,24 @@
       $scope.view = 'previewFiles';
       $scope.setView = function(_view){
         $scope.view = _view;
+      };
+      $scope.rememberMe = window.localStorage.getItem('persistence')=='local'?true:false;
+      $scope.fbSetPersistence = function(state){
+        switch(state){
+          case true:
+            persistence = firebase.auth.Auth.Persistence.LOCAL;
+            break;
+          case false:
+            persistence = firebase.auth.Auth.Persistence.NONE;
+            break;
+        }
+        window.localStorage.setItem('persistence', persistence);
       }
     }
   ]);
   function setupAudio(player, audioBase64, fileName){
     let dataset = audioBase64.separate(200000).multipart('data');
     player.src = audioBase64;
-    console.log(dataset.data0.length)
     if(bodyscope != undefined){
       bodyscope.addAudio = function(){
         let newKey = firebase.database().ref('audio').push().key;
@@ -143,6 +195,7 @@
     }
   }
   window.onload = function(){
+    persistence = window.localStorage.getItem('persistence');
     if(bodyscope != undefined){
       bodyscope.loggedIn = false;
     }

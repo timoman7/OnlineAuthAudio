@@ -7,6 +7,9 @@
       body{
         padding-top: 70px;
       }
+      .adminBtn{
+        transform: translateY(50%);
+      }
     </style>
   </head>
   <body ng-app="page" ng-controller="body">
@@ -17,10 +20,11 @@
         </div>
         <ul class="nav navbar-nav">
           <li ng-if="loggedIn == false"><a href="#" id="lgin">Login</a></li>
+          <li ng-if="loggedIn == false"><span style="position:fixed;transform: translateY(50%)"><input name="rememberMe" type="checkbox" ng-change="fbSetPersistence(rememberMe)" ng-model="rememberMe"><label for="rememberMe">Remember me</label></span></li>
           <li ng-if="loggedIn == true"><a href="#" id="lgout">Log out</a></li>
-          <li ng-if="currentUser.priv == 'Admin'"><button ng-model="button" ng-disabled="view=='addAudio'" ng-click="setView('addAudio')">Add audio</button></li>
-          <li ng-if="currentUser.priv == 'Admin'"><button ng-model="button" ng-disabled="view=='previewFiles'" ng-click="setView('previewFiles')">Audio files</button></li>
-          <li ng-if="currentUser.priv == 'Admin'"><button ng-model="button" ng-disabled="view=='editUsers'" ng-click="setView('editUsers')">Edit users</button></li>
+          <li ng-if="currentUser.priv == 'Admin'"><button class="adminBtn" ng-model="button" ng-disabled="view=='addAudio'" ng-click="setView('addAudio')">Add audio</button></li>
+          <li ng-if="currentUser.priv == 'Admin'"><button class="adminBtn" ng-model="button" ng-disabled="view=='previewFiles'" ng-click="setView('previewFiles')">Audio files</button></li>
+          <li ng-if="currentUser.priv == 'Admin'"><button class="adminBtn" ng-model="button" ng-disabled="view=='editUsers'" ng-click="setView('editUsers')">Edit users</button></li>
         </ul>
       </div>
     </nav>
@@ -33,7 +37,7 @@
         </div>
         <div id="userPanel" ng-if="view=='editUsers'">
           <div class="admin-user-settings admin-user-account">
-            <span>Admin:</span><br>
+            <span>Owner:</span><br>
             <span>Name: {{currentUser.name}}</span><br>
             <span>UID: {{currentUser.uid}}</span>
           </div>
