@@ -51,7 +51,10 @@
       </div>
       <div id="audioFiles" ng-if="(currentUser.priv=='Admin' && view=='previewFiles') || currentUser.priv=='User'">
         <span ng-repeat="audioFile in audioFiles">
-          <span id="{{audioFile.index}}">{{audioFile.name}} <a id="{{audioFile.index}}-generator" ng-click="downloadFile(audioFile.index)" href="#">Generate file</a></span><br>
+          <span id="{{audioFile.index}}">
+            {{audioFile.name}} <a id="{{audioFile.index}}-generator" ng-click="downloadFile(audioFile.index)" href="#">Generate file</a>
+            <a ng-if="currentUser.priv=='Admin'" ng-click="deleteAudio(audioFile.index)" href="#">Delete audio</a>
+          </span><br>
         </span>
       </div>
     </div>

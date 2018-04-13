@@ -79,6 +79,9 @@
             downloads: bodyscope.audioFiles[fileID].downloads+1
           })
         };
+        bodyscope.deleteAudio = function(fileID){
+          firebase.database().ref(`audio/${fileID}`).remove();
+        };
         firebase.database().ref('users').on('value', (u)=>{
           bodyscope.users = u.val();
         });
@@ -122,7 +125,7 @@
   	provider = new firebase.auth.GoogleAuthProvider();
     console.log(persistence)
   	firebase.auth().setPersistence(persistence).then(function(){
-      firebase.auth().signInWithRedirect(provider);
+      return firebase.auth().signInWithRedirect(provider);
     });
   }
   function logout(){
@@ -194,6 +197,9 @@
       };
     }
   }
+  // function addEvent(str, fn){
+  //   let dom = document.querySelector()
+  // }
   window.onload = function(){
     persistence = window.localStorage.getItem('persistence');
     if(bodyscope != undefined){
@@ -201,11 +207,13 @@
     }
     setInterval(()=>{
       if(document.querySelector("#lgin")){
-        document.querySelector("#lgin").removeEventListener('click', login);
-        document.querySelector("#lgin").addEventListener('click', login);
+        document.querySelector("#lgin").onclick = login;
+        // document.querySelector("#lgin").removeEventListener('click', login);
+        // document.querySelector("#lgin").addEventListener('click', login);
       }else if(document.querySelector("#lgout")){
-        document.querySelector("#lgout").removeEventListener('click', logout);
-        document.querySelector("#lgout").addEventListener('click', logout);
+        document.querySelector("#lgout").onclick = logout;
+        // document.querySelector("#lgout").removeEventListener('click', logout);
+        // document.querySelector("#lgout").addEventListener('click', logout);
       }
       if(document.querySelector('input[type="file"]')){
         let fileInput = document.querySelector('input[type="file"]');
@@ -217,8 +225,9 @@
           };
           reader.readAsDataURL(this.files[0]);
         }
-        fileInput.removeEventListener('change', fileInputListener, false);
-        fileInput.addEventListener('change', fileInputListener, false);
+        fileInput.onchange = fileInputListener;
+        // fileInput.removeEventListener('change', fileInputListener, false);
+        // fileInput.addEventListener('change', fileInputListener, false);
       }
       bodyscope.$apply();
     }, 1000);
