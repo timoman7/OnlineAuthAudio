@@ -37,85 +37,86 @@
     return blob;
   }
   firebase.auth().getRedirectResult().then((result)=>{
-  	let user = result.user;
-  	let credential = result.credential;
-  	if(user != null){
-      if(bodyscope != undefined){
-        bodyscope.loggedIn = true;
-        bodyscope.addUser = function(uid){
-          firebase.database().ref(`users/${uid}`).update({
-            priv: 'User'
-          });
-        };
-        bodyscope.remUser = function(uid){
-          firebase.database().ref(`users/${uid}`).update({
-            priv: 'None'
-          });
-        };
-        bodyscope.downloadFile = function(fileID){
-          firebase.database().ref(`audio/${fileID}`).once('value', (d)=>{
-            let downloadLink = document.createElement('audio');
-            let concatSrc = "";
-            let _audioFile_ = d.val();
-            let kns = Object.keys(_audioFile_.data).sort(function(a,b){
-              if(parseFloat(a.replace('data','')) > parseFloat(b.replace('data',''))){
-                return 1;
-              }else if(parseFloat(a.replace('data','')) < parseFloat(b.replace('data',''))){
-                return -1;
-              }else{
-                return 0;
-              }
-            });
-            kns.forEach((kn)=>{
-              concatSrc += _audioFile_.data[kn];
-            });
-            downloadLink.src = URL.createObjectURL(b64toBlob(concatSrc));
-            downloadLink.download = _audioFile_.name;
-            downloadLink.controls = true;
-            document.querySelector(`#${fileID}`).appendChild(downloadLink);
-            document.querySelector(`#${fileID}-generator`).style.display = "none";
-          });
-          firebase.database().ref(`audio/${fileID}`).update({
-            downloads: bodyscope.audioFiles[fileID].downloads+1
-          })
-        };
-        bodyscope.deleteAudio = function(fileID){
-          firebase.database().ref(`audio/${fileID}`).remove();
-        };
-        firebase.database().ref('users').on('value', (u)=>{
-          bodyscope.users = u.val();
-        });
-        firebase.database().ref('audio').on('value', (u)=>{
-          bodyscope.audioFiles = u.val();
-        });
-      }
-  		currentUser = firebase.auth().currentUser;
-      let userReference = firebase.database().ref(`users/${currentUser.uid}`);
-      userReference.on('value', (v) => {
-        let data = v.val();
-        for(let kn in data){
-          currentUser[kn] = data[kn];
-        }
-        currentUser.name = currentUser.displayName;
+    firebase.auth().onAuthStateChanged(user =>{
+    	let credential = result.credential;
+    	if(user != null){
         if(bodyscope != undefined){
-          bodyscope.currentUser = currentUser;
+          bodyscope.loggedIn = true;
+          bodyscope.addUser = function(uid){
+            firebase.database().ref(`users/${uid}`).update({
+              priv: 'User'
+            });
+          };
+          bodyscope.remUser = function(uid){
+            firebase.database().ref(`users/${uid}`).update({
+              priv: 'None'
+            });
+          };
+          bodyscope.downloadFile = function(fileID){
+            firebase.database().ref(`audio/${fileID}`).once('value', (d)=>{
+              let downloadLink = document.createElement('audio');
+              let concatSrc = "";
+              let _audioFile_ = d.val();
+              let kns = Object.keys(_audioFile_.data).sort(function(a,b){
+                if(parseFloat(a.replace('data','')) > parseFloat(b.replace('data',''))){
+                  return 1;
+                }else if(parseFloat(a.replace('data','')) < parseFloat(b.replace('data',''))){
+                  return -1;
+                }else{
+                  return 0;
+                }
+              });
+              kns.forEach((kn)=>{
+                concatSrc += _audioFile_.data[kn];
+              });
+              downloadLink.src = URL.createObjectURL(b64toBlob(concatSrc));
+              downloadLink.download = _audioFile_.name;
+              downloadLink.controls = true;
+              document.querySelector(`#${fileID}`).appendChild(downloadLink);
+              document.querySelector(`#${fileID}-generator`).style.display = "none";
+            });
+            firebase.database().ref(`audio/${fileID}`).update({
+              downloads: bodyscope.audioFiles[fileID].downloads+1
+            })
+          };
+          bodyscope.deleteAudio = function(fileID){
+            firebase.database().ref(`audio/${fileID}`).remove();
+          };
+          firebase.database().ref('users').on('value', (u)=>{
+            bodyscope.users = u.val();
+          });
+          firebase.database().ref('audio').on('value', (u)=>{
+            bodyscope.audioFiles = u.val();
+          });
         }
-      });
-      userReference.update({
-        name: currentUser.displayName,
-        uid: currentUser.uid,
-        online: true
-      });
-  		userReference.onDisconnect().update({
-  			online: false
-  		});
-  	}else{
-      currentUser = {
-        uid: "-1",
-        name: "Anonymous User",
-        priv: "None"
-      };
-    }
+    		currentUser = firebase.auth().currentUser;
+        let userReference = firebase.database().ref(`users/${currentUser.uid}`);
+        userReference.on('value', (v) => {
+          let data = v.val();
+          for(let kn in data){
+            currentUser[kn] = data[kn];
+          }
+          currentUser.name = currentUser.displayName;
+          if(bodyscope != undefined){
+            bodyscope.currentUser = currentUser;
+          }
+        });
+        userReference.update({
+          name: currentUser.displayName,
+          uid: currentUser.uid,
+          online: true
+        });
+    		userReference.onDisconnect().update({
+    			online: false
+    		});
+    	}else{
+        currentUser = {
+          uid: "-1",
+          name: "Anonymous User",
+          priv: "None"
+        };
+      }
+    });
   },(error)=>{
   	let email = error.email;
   	let credential = error.credential;
