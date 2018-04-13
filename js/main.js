@@ -52,6 +52,27 @@
               priv: 'None'
             });
           };
+          bodyscope.adminUser = function(uid){
+            if(prompt(`Set ${bodyscope.users[uid].name} to admin?\nType "Yes, set to admin" to continue.`) == "Yes, set to admin"){
+              firebase.database().ref(`users/${uid}`).update({
+                priv: 'Admin'
+              });
+              alert(`Set ${bodyscope.users[uid].name} as admin.`);
+            }else{
+              alert('Aborted privilege elevation.');
+            }
+          };
+          bodyscope.transferOwnership = function(uid){
+            if(prompt(`Transfer ownership to ${bodyscope.users[uid].name}?\nType "Yes, transfer ownership" to continue.`) == "Yes, transfer ownership"){
+              firebase.database().ref('admin').update({
+                uid: uid,
+                name: bodyscope.users[uid].name
+              });
+              alert(`Set owner to ${bodyscope.users[uid].name}.`);
+            }else{
+              alert('Aborted transfer.');
+            }
+          };
           bodyscope.downloadFile = function(fileID){
             firebase.database().ref(`audio/${fileID}`).once('value', (d)=>{
               let downloadLink = document.createElement('audio');
