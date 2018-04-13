@@ -58,7 +58,7 @@
       <div id="adminPanel" ng-if="currentUser.priv=='Admin'">
         <div id="audioPanel" ng-if="view=='addAudio'">
           <input type="file"><br>
-          <audio id="audioPreview" controls></audio>
+          <span>Preview audio:</span><audio style="vertical-align: middle" id="audioPreview" controls></audio><br>
           <button ng-click="addAudio()">Add audio</button>
         </div>
         <div id="userPanel" ng-if="view=='editUsers'">
