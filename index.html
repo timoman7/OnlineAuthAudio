@@ -70,7 +70,7 @@
             </span>
           </div>
           <div class="admin-user-settings" ng-repeat="user in users" style="border-top: black thin solid; padding-top: 5px;">
-            <span>User: <span ng-if="currentUser.uid != user.uid"><button ng-click="transferOwnership(user.uid)" ng-if="currentUser.uid == owner.uid" ng-disabled="user.priv != 'Admin'">Transfer ownership</button>
+            <span>User: <span ng-if="currentUser.uid != user.uid && user.uid != owner.uid"><button ng-click="transferOwnership(user.uid)" ng-if="currentUser.uid == owner.uid" ng-disabled="user.priv != 'Admin'">Transfer ownership</button>
               <button ng-click="adminUser(user.uid)" ng-disabled="user.priv == 'Admin' || user.priv != 'User'">Set user to admin</button>
               <button ng-click="addUser(user.uid)" ng-disabled="user.priv == 'User'">Allow file access</button>
               <button ng-click="remUser(user.uid)" ng-disabled="user.priv == 'None'">Remove file access</button></span></span><br>
