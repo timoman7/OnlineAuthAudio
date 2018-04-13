@@ -42,14 +42,14 @@
             <span>UID: {{currentUser.uid}}</span>
           </div>
           <div class="admin-user-settings" ng-repeat="user in users">
-            <span style="border-top: black thin solid; padding-top: 5px;">
+            <div style="border-top: black thin solid; padding-top: 5px;">
               <span>User: <button ng-click="addUser(user.uid)" ng-disabled="user.priv == 'User' || user.priv == 'Admin'">Allow file access</button><button ng-click="remUser(user.uid)" ng-disabled="user.priv == 'None'">Remove file access</button></span><br>
-              <span style="position: absolute; left: 15px;">
+              <span style="position: relative; left: 15px;">
                 <span>Name: {{user.name}}</span><br>
                 <span>UID: {{user.uid}}</span><br>
                 <span>Privilege level: {{user.priv}}</span>
               </span>
-            </span>
+            </div>
           </div>
         </div>
       </div>
