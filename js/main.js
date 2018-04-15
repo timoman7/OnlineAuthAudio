@@ -194,7 +194,7 @@
             persistence = firebase.auth.Auth.Persistence.LOCAL;
             break;
           case false:
-            persistence = firebase.auth.Auth.Persistence.NONE;
+            persistence = firebase.auth.Auth.Persistence.SESSION;
             break;
         }
         window.localStorage.setItem('persistence', persistence);
@@ -226,6 +226,11 @@
   //   let dom = document.querySelector()
   // }
   window.onload = function(){
+    if(window.localStorage.getItem('persistence')){
+      persistence = window.localStorage.getItem('persistence');
+    }else{
+      window.localStorage.setItem('persistence', 'session');
+    }
     persistence = window.localStorage.getItem('persistence');
     if(bodyscope != undefined){
       bodyscope.loggedIn = false;
