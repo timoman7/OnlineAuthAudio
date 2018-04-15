@@ -75,6 +75,7 @@
           };
           bodyscope.downloadFile = function(fileID){
             firebase.database().ref(`audio/${fileID}`).once('value', (d)=>{
+              let downloadPreview = document.createElement('audio');
               let downloadLink = document.createElement('audio');
               let concatSrc = "";
               let _audioFile_ = d.val();
@@ -90,9 +91,12 @@
               kns.forEach((kn)=>{
                 concatSrc += _audioFile_.data[kn];
               });
-              downloadLink.src = URL.createObjectURL(b64toBlob(concatSrc));
+              downloadPreview.src = URL.createObjectURL(b64toBlob(concatSrc));
+              downloadPreview.controls = true;
+              downloadLink.href = URL.createObjectURL(b64toBlob(concatSrc));
+              downloadLink.innerHTML = "Download";
               downloadLink.download = _audioFile_.name;
-              downloadLink.controls = true;
+              document.querySelector(`#${fileID}`).appendChild(downloadPreview);
               document.querySelector(`#${fileID}`).appendChild(downloadLink);
               document.querySelector(`#${fileID}-generator`).style.display = "none";
             });
