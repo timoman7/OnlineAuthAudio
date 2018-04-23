@@ -36,6 +36,24 @@
           visibility: visible;
           border: 2px solid white;
       }
+      a.glyphicon{
+
+      }
+      #screenInput{
+        position: inherit;
+        z-index: 0;
+      }
+      #screenInput.isDragging{
+        width: 100%;
+        height: 100%;
+        top:0;
+        left:0;
+        z-index:1;
+        position:absolute;
+      }
+      #screenInput.isDragging::after{
+        content: "Drop audio files here";
+      }
     </style>
   </head>
   <body ng-app="page" ng-controller="body">
@@ -57,9 +75,11 @@
     <div>
       <div id="adminPanel" ng-if="currentUser.priv=='Admin'">
         <div id="audioPanel" ng-if="view=='addAudio'">
-          <input type="file"><br>
-          <span>Preview audio:</span><audio style="vertical-align: middle" id="audioPreview" controls></audio><br>
-          <button ng-click="addAudio()">Add audio</button>
+          <!-- <label for="uploadFiles"><span class="glyphicon glyphicon-open-file"></span></label>
+          <input name="uploadFiles" type="file" multiple accept="audio/*"><br> -->
+          <input type="file" multiple name="screenInput" id="screenInput" accept="audio/*">
+          <span ng-repeat="prevAudio in AllFiles">Preview audio({{prevAudio.fileName}}):<audio style="vertical-align: middle" ng-src="{{prevAudio.audioBase64}}" controls></audio><a ng-click="removeUpload(prevAudio)" class="glyphicon glyphicon-remove"></a><br></span>
+          <button ng-click="addAudio()"><span class="glyphicon glyphicon-cloud-upload"></span>Add audio</button>
         </div>
         <div id="userPanel" ng-if="view=='editUsers'">
           <div class="admin-user-settings admin-user-account">
@@ -70,10 +90,11 @@
             </span>
           </div>
           <div class="admin-user-settings" ng-repeat="user in users" style="border-top: black thin solid; padding-top: 5px;">
-            <span>User: <span ng-if="currentUser.uid != user.uid && user.uid != owner.uid"><button ng-click="transferOwnership(user.uid)" ng-if="currentUser.uid == owner.uid" ng-disabled="user.priv != 'Admin'">Transfer ownership</button>
-              <button ng-click="adminUser(user.uid)" ng-disabled="user.priv == 'Admin' || user.priv != 'User'">Set user to admin</button>
-              <button ng-click="addUser(user.uid)" ng-disabled="user.priv == 'User'">Allow file access</button>
-              <button ng-click="remUser(user.uid)" ng-disabled="user.priv == 'None'">Remove file access</button></span></span><br>
+            <span>User: <span ng-if="currentUser.uid != user.uid && user.uid != owner.uid">
+              <button class="glyphicon glyphicon-transfer" ng-click="transferOwnership(user.uid)" ng-if="currentUser.uid == owner.uid" ng-disabled="user.priv != 'Admin'">Transfer ownership</button>
+              <button class="glyphicon glyphicon-star" ng-click="adminUser(user.uid)" ng-disabled="user.priv == 'Admin' || user.priv != 'User'">Set user to admin</button>
+              <button class="glyphicon glyphicon-user" ng-click="addUser(user.uid)" ng-disabled="user.priv == 'User'">Allow file access</button>
+              <button class="glyphicon glyphicon-remove" ng-click="remUser(user.uid)" ng-disabled="user.priv == 'None'">Remove file access</button></span></span><br>
             <span style="position: relative; left: 15px;">
               <span>Name: {{user.name}}</span><br>
               <span>UID: {{user.uid}}</span><br>
@@ -87,7 +108,7 @@
         <span ng-repeat="audioFile in audioFiles">
           <span id="{{audioFile.index}}">
             {{audioFile.name}} <a id="{{audioFile.index}}-generator" ng-click="downloadFile(audioFile.index)" href="#">Generate file</a>
-            <a ng-if="currentUser.priv=='Admin'" ng-click="deleteAudio(audioFile.index)" href="#">Delete audio</a>
+            <a class="glyphicon glyphicon-trash" ng-if="currentUser.priv=='Admin'" ng-click="deleteAudio(audioFile.index)" href="#">Delete</a>
           </span><br>
         </span>
       </div>

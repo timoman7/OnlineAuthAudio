@@ -12,6 +12,7 @@
   **/
   let bodyscope;
   let persistence;
+  let dragState = "leave";
   function b64toBlob(b64, sliceSize) {
     let b64Data = b64.replace(/data:([\w/\-]*);base64,/g,'');
     let contentType = b64.replace(/data:([\w/\-]*);base64,(.*)/g,'$1');
@@ -38,8 +39,8 @@
   }
   firebase.auth().getRedirectResult().then((result)=>{
     firebase.auth().onAuthStateChanged(user =>{
-    	let credential = result.credential;
-    	if(user != null){
+      let credential = result.credential;
+      if(user != null){
         if(bodyscope != undefined){
           bodyscope.loggedIn = true;
           bodyscope.addUser = function(uid){
@@ -76,7 +77,7 @@
           bodyscope.downloadFile = function(fileID){
             firebase.database().ref(`audio/${fileID}`).once('value', (d)=>{
               let downloadPreview = document.createElement('audio');
-              let downloadLink = document.createElement('audio');
+              let downloadLink = document.createElement('a');
               let concatSrc = "";
               let _audioFile_ = d.val();
               let kns = Object.keys(_audioFile_.data).sort(function(a,b){
@@ -94,7 +95,8 @@
               downloadPreview.src = URL.createObjectURL(b64toBlob(concatSrc));
               downloadPreview.controls = true;
               downloadLink.href = URL.createObjectURL(b64toBlob(concatSrc));
-              downloadLink.innerHTML = "Download";
+              downloadLink.innerHTML = "";
+              downloadLink.classList.add('glyphicon', 'glyphicon-download')
               downloadLink.download = _audioFile_.name;
               document.querySelector(`#${fileID}`).appendChild(downloadPreview);
               document.querySelector(`#${fileID}`).appendChild(downloadLink);
@@ -117,7 +119,7 @@
             bodyscope.audioFiles = u.val();
           });
         }
-    		currentUser = firebase.auth().currentUser;
+        currentUser = firebase.auth().currentUser;
         let userReference = firebase.database().ref(`users/${currentUser.uid}`);
         userReference.on('value', (v) => {
           let data = v.val();
@@ -134,10 +136,10 @@
           uid: currentUser.uid,
           online: true
         });
-    		userReference.onDisconnect().update({
-    			online: false
-    		});
-    	}else{
+        userReference.onDisconnect().update({
+          online: false
+        });
+      }else{
         currentUser = {
           uid: "-1",
           name: "Anonymous User",
@@ -146,28 +148,27 @@
       }
     });
   },(error)=>{
-  	let email = error.email;
-  	let credential = error.credential;
+    let email = error.email;
+    let credential = error.credential;
   });
   function login(){
-  	var provider;
-  	provider = new firebase.auth.GoogleAuthProvider();
-    console.log(persistence)
-  	firebase.auth().setPersistence(persistence).then(function(){
+    var provider;
+    provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().setPersistence(persistence).then(function(){
       return firebase.auth().signInWithRedirect(provider);
     });
   }
   function logout(){
-  	firebase.database().ref(`users/${currentUser.uid}`).update({
-  		online: false
-  	});
-  	firebase.auth().signOut().then(()=>{
-  		location.reload();
-  	}).catch((error)=>{
-  	  // An error happened.
-  		console.log(error);
-  		alert("Somehow you screwed up logging out.");
-  	});
+    firebase.database().ref(`users/${currentUser.uid}`).update({
+      online: false
+    });
+    firebase.auth().signOut().then(()=>{
+      location.reload();
+    }).catch((error)=>{
+      // An error happened.
+      console.log(error);
+      alert("Somehow you screwed up logging out.");
+    });
   }
   Array.prototype.multipart = function(name) {
     let rv = {};
@@ -191,6 +192,16 @@
       $scope.setView = function(_view){
         $scope.view = _view;
       };
+      $scope.removeUpload = function(uploadData){
+        if($scope.AllFiles){
+          if($scope.AllFiles.indexOf(uploadData) != -1){
+            $scope.AllFiles = $scope.AllFiles.filter((a)=>{
+              return a != uploadData;
+            });
+            setupAudio();
+          }
+        }
+      };
       $scope.rememberMe = window.localStorage.getItem('persistence')=='local'?true:false;
       $scope.fbSetPersistence = function(state){
         switch(state){
@@ -205,24 +216,29 @@
       }
     }
   ]);
-  function setupAudio(player, audioBase64, fileName){
-    let dataset = audioBase64.separate(200000).multipart('data');
-    player.src = audioBase64;
+  function setupAudio(){
     if(bodyscope != undefined){
+      let audioSets = bodyscope.AllFiles;
       bodyscope.addAudio = function(){
-        let newKey = firebase.database().ref('audio').push().key;
-        let newAudio = {};
-        newAudio[newKey] = {
-          name: fileName,
-          downloads: 0,
-          index: newKey
-        };
-        firebase.database().ref('audio').update(newAudio);
-        for(let dv in dataset){
-          let d = {};
-          d[dv] = dataset[dv];
-          firebase.database().ref(`audio/${newKey}/data`).update(d);
-        }
+        audioSets.forEach((audioSet)=>{
+          let audioBase64 = audioSet.audioBase64,
+              fileName = audioSet.fileName;
+          let dataset = audioBase64.separate(200000).multipart('data');
+          let newKey = firebase.database().ref('audio').push().key;
+          let newAudio = {};
+          newAudio[newKey] = {
+            name: fileName,
+            downloads: 0,
+            index: newKey
+          };
+          firebase.database().ref('audio').update(newAudio);
+          for(let dv in dataset){
+            let d = {};
+            d[dv] = dataset[dv];
+            firebase.database().ref(`audio/${newKey}/data`).update(d);
+          }
+        });
+        alert(`Uploaded ${audioSets.length} file${audioSets.length!=1?'s':''}`);
       };
     }
   }
@@ -249,17 +265,67 @@
         // document.querySelector("#lgout").removeEventListener('click', logout);
         // document.querySelector("#lgout").addEventListener('click', logout);
       }
-      if(document.querySelector('input[type="file"]')){
-        let fileInput = document.querySelector('input[type="file"]');
-        let _audioPreview_ = document.querySelector('#audioPreview');
+      if(document.querySelector('#screenInput')){
+        let fileInput = document.querySelector('#screenInput');
+        window.ondragenter = function(e){
+          if(e.dataTransfer){
+            if(e.dataTransfer.items.length > 0){
+              let onlyAudio = true;
+              for(let i = 0; i < e.dataTransfer.items.length; i++){
+                if(!e.dataTransfer.items[0].type.match('audio/')){
+                  onlyAudio = false;
+                }
+              }
+              if(onlyAudio){
+                fileInput.classList.add('isDragging');
+              }
+            }
+          }
+        };
+        window.ondragleave = function(e){
+          if(e.clientX == 0 && e.clientY == 0){
+            fileInput.classList.remove('isDragging');
+          }
+        };
+        // fileInput.style.width = `${window.innerWidth}px`;
+        // fileInput.style.height = `${window.innerHeight}px`;
         function fileInputListener(e) {
-          var reader = new FileReader();
-          reader.onload = function(e) {
-            setupAudio(_audioPreview_, this.result, fileInput.files[0].name);
-          };
-          reader.readAsDataURL(this.files[0]);
+          if(bodyscope != undefined){
+            bodyscope.allLoaded = false;
+            bodyscope.AllFiles = [];
+            for(let f = 0; f < fileInput.files.length; f++){
+              let reader = new FileReader();
+              reader.onload = function(e) {
+                if(!bodyscope.allLoaded){
+                  bodyscope.AllFiles.push({
+                    audioBase64: this.result,
+                    fileName: fileInput.files[f].name
+                  });
+                }
+                if(bodyscope.AllFiles.length == fileInput.files.length){
+                  bodyscope.allLoaded = true;
+                  setupAudio();
+                }
+              };
+              reader.readAsDataURL(fileInput.files[f]);
+            }
+          }
         }
-        fileInput.onchange = fileInputListener;
+        fileInput.ondrop = function(e){
+          new Promise(function(resolve, reject){
+            function checkFileLength(e){
+              if(fileInput.files.length > 0){
+                resolve(e);
+              }else{
+                setTimeout(checkFileLength,500, e);
+              }
+            }
+            setTimeout(checkFileLength,500, e);
+          }).then((e)=>{
+            fileInputListener(e);
+          });
+          fileInput.classList.remove('isDragging');
+        };
         // fileInput.removeEventListener('change', fileInputListener, false);
         // fileInput.addEventListener('change', fileInputListener, false);
       }
