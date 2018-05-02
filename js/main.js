@@ -27,7 +27,7 @@ function Hash(){
   let workerPost;
   let dragState = "leave";
   if(window.Worker){
-    myWorker = new Worker('/js/worker.js');
+    myWorker = new Worker('./js/worker.js');
     workerPost = function(d){
       let hash = Hash();
       let isDone = false;
