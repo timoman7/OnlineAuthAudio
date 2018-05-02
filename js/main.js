@@ -392,6 +392,22 @@ function Hash(){
           });
           fileInput.classList.remove('isDragging');
         };
+        fileInput.onchange = function(e){
+          if(!fileInput.classList.contains('isDragging')){
+            new Promise(function(resolve, reject){
+              function checkFileLength(e){
+                if(fileInput.files.length > 0){
+                  resolve(e);
+                }else{
+                  setTimeout(checkFileLength,500, e);
+                }
+              }
+              setTimeout(checkFileLength,500, e);
+            }).then((e)=>{
+              fileInputListener(e);
+            });
+          }
+        };
         // fileInput.removeEventListener('change', fileInputListener, false);
         // fileInput.addEventListener('change', fileInputListener, false);
       }
