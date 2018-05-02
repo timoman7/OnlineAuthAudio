@@ -1,3 +1,14 @@
+function Hash(){
+  let rv = '';
+  for(let i = 0; i < 128; i++){
+    if(Math.random()>0.5){
+      rv += String.fromCharCode((65+Math.round(Math.random()*25))+(Math.round(Math.random())*32));
+    }else{
+      rv += ''+Math.round(Math.random()*9);
+    }
+  }
+  return rv;
+}
 (async function(TConfig){
   /**
   * Debug section
@@ -12,7 +23,40 @@
   **/
   let bodyscope;
   let persistence;
+  let myWorker;
+  let workerPost;
   let dragState = "leave";
+  if(window.Worker){
+    myWorker = new Worker('/js/worker.js');
+    workerPost = function(d){
+      let hash = Hash();
+      let isDone = false;
+      let data;
+      myWorker.addEventListener('message', function(e){
+        if(e.data.hash == hash){
+          data = e.data.data;
+          isDone = true;
+        }
+      }, {
+        once: true
+      });
+      myWorker.postMessage({
+        request: d.request,
+        data: d.data,
+        _hash_: hash
+      });
+      return new Promise((resolve, reject)=>{
+        function loop(){
+          if(isDone){
+            resolve(data);
+          }else{
+            setTimeout(loop, 1000);
+          }
+        }
+        setTimeout(loop, 1000);
+      });
+    };
+  }
   function b64toBlob(b64, sliceSize) {
     let b64Data = b64.replace(/data:([\w/\-]*);base64,/g,'');
     let contentType = b64.replace(/data:([\w/\-]*);base64,(.*)/g,'$1');
@@ -75,36 +119,58 @@
             }
           };
           bodyscope.downloadFile = function(fileID){
-            firebase.database().ref(`audio/${fileID}`).once('value', (d)=>{
-              let downloadPreview = document.createElement('audio');
-              let downloadLink = document.createElement('a');
-              let concatSrc = "";
-              let _audioFile_ = d.val();
-              let kns = Object.keys(_audioFile_.data).sort(function(a,b){
-                if(parseFloat(a.replace('data','')) > parseFloat(b.replace('data',''))){
-                  return 1;
-                }else if(parseFloat(a.replace('data','')) < parseFloat(b.replace('data',''))){
-                  return -1;
-                }else{
-                  return 0;
-                }
+            if(window.Worker){
+              workerPost({request: 'download', data: fileID})
+                .then((data)=>{
+                  let downloadPreview = document.createElement('audio');
+                  let downloadLink = document.createElement('a');
+                  downloadPreview.src = data.blob;
+                  downloadPreview.controls = true;
+                  downloadPreview.controlsList = 'nodownload';
+                  downloadLink.href = data.blob;
+                  downloadLink.innerHTML = "";
+                  downloadLink.classList.add('glyphicon', 'glyphicon-download')
+                  downloadLink.download = data.name;
+                  document.querySelector(`#${fileID}`).appendChild(downloadPreview);
+                  document.querySelector(`#${fileID}`).appendChild(downloadLink);
+                  document.querySelector(`#${fileID}-generator`).style.display = "none";
+                });
+              firebase.database().ref(`audio/${fileID}`).update({
+                downloads: bodyscope.audioFiles[fileID].downloads+1
               });
-              kns.forEach((kn)=>{
-                concatSrc += _audioFile_.data[kn];
+            }else{
+              firebase.database().ref(`audio/${fileID}`).once('value', (d)=>{
+                let downloadPreview = document.createElement('audio');
+                let downloadLink = document.createElement('a');
+                let concatSrc = "";
+                let _audioFile_ = d.val();
+                let kns = Object.keys(_audioFile_.data).sort(function(a,b){
+                  if(parseFloat(a.replace('data','')) > parseFloat(b.replace('data',''))){
+                    return 1;
+                  }else if(parseFloat(a.replace('data','')) < parseFloat(b.replace('data',''))){
+                    return -1;
+                  }else{
+                    return 0;
+                  }
+                });
+                kns.forEach((kn)=>{
+                  concatSrc += _audioFile_.data[kn];
+                });
+                downloadPreview.src = URL.createObjectURL(b64toBlob(concatSrc));
+                downloadPreview.controls = true;
+                downloadPreview.controlsList = 'nodownload';
+                downloadLink.href = URL.createObjectURL(b64toBlob(concatSrc));
+                downloadLink.innerHTML = "";
+                downloadLink.classList.add('glyphicon', 'glyphicon-download')
+                downloadLink.download = _audioFile_.name;
+                document.querySelector(`#${fileID}`).appendChild(downloadPreview);
+                document.querySelector(`#${fileID}`).appendChild(downloadLink);
+                document.querySelector(`#${fileID}-generator`).style.display = "none";
               });
-              downloadPreview.src = URL.createObjectURL(b64toBlob(concatSrc));
-              downloadPreview.controls = true;
-              downloadLink.href = URL.createObjectURL(b64toBlob(concatSrc));
-              downloadLink.innerHTML = "";
-              downloadLink.classList.add('glyphicon', 'glyphicon-download')
-              downloadLink.download = _audioFile_.name;
-              document.querySelector(`#${fileID}`).appendChild(downloadPreview);
-              document.querySelector(`#${fileID}`).appendChild(downloadLink);
-              document.querySelector(`#${fileID}-generator`).style.display = "none";
-            });
-            firebase.database().ref(`audio/${fileID}`).update({
-              downloads: bodyscope.audioFiles[fileID].downloads+1
-            })
+              firebase.database().ref(`audio/${fileID}`).update({
+                downloads: bodyscope.audioFiles[fileID].downloads+1
+              });
+            }
           };
           bodyscope.deleteAudio = function(fileID){
             firebase.database().ref(`audio/${fileID}`).remove();
