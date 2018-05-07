@@ -57,6 +57,16 @@ function Hash(){
       });
     };
   }
+  let mySW;
+  if(navigator.serviceWorker){
+    navigator.serviceWorker.register('./js/serviceWorker.js').then(function(registration) {
+      console.log('Service worker registration succeeded:', registration);
+      mySW = registration;
+      window.mySW = mySW;
+    }).catch(function(error) {
+      console.log('Service worker registration failed:', error);
+    });
+  }
   function b64toBlob(b64, sliceSize) {
     let b64Data = b64.replace(/data:([\w/\-]*);base64,/g,'');
     let contentType = b64.replace(/data:([\w/\-]*);base64,(.*)/g,'$1');
