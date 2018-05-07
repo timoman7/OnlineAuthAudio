@@ -20,10 +20,16 @@ messaging.setBackgroundMessageHandler(function(payload) {
   return self.registration.showNotification(notificationTitle,
     notificationOptions);
 });
-if(firebase.auth().currentUser != null){
-  firebase.database().ref(`users/${firebase.auth().currentUser.uid}/priv`).on('value',function(v){
-    self.registration.showNotification('User permissions changed', {
-        body: `Permission set to ${v.val()}`
+let authChanged = false;
+firebase.auth().onAuthStateChanged(function(a){
+  if(!authChanged){
+    if(firebase.auth().currentUser != null){
+      firebase.database().ref(`users/${firebase.auth().currentUser.uid}/priv`).on('value',function(v){
+        self.registration.showNotification('User permissions changed', {
+            body: `Permission set to ${v.val()}`
+          });
       });
-  });
-}
+      authChanged = true;
+    }
+  }
+});
