@@ -58,14 +58,12 @@ function Hash(){
     };
   }
   let mySW;
-  if(navigator.serviceWorker){
-    navigator.serviceWorker.register('./js/serviceWorker.js').then(function(registration) {
-      console.log('Service worker registration succeeded:', registration);
-      mySW = registration;
-      window.mySW = mySW;
-    }).catch(function(error) {
-      console.log('Service worker registration failed:', error);
-    });
+  if(window.SharedWorker){
+    mySW = new SharedWorker('./js/sharedWorker.js');
+    mySW.port.onmessage = function(e){
+      console.log('message received from worker:',e)
+    };
+    window.mySW = mySW;
   }
   function b64toBlob(b64, sliceSize) {
     let b64Data = b64.replace(/data:([\w/\-]*);base64,/g,'');
